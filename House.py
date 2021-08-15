@@ -48,12 +48,19 @@ class House:
         pmtMonthly = -npf.pmt(rate=intMonthly, nper=termMonths, pv=principal, fv=0, when="begin")
         return pmtMonthly * 12
 
-    def getAnnualCF(self, availCPF, mortInt, mortTerm, share=1, downPmtRatio=1):
+    def getAnnualCF(self, availCPF, mortInt, mortTerm, share=1, downPmtRatio=1, addloan=0, addInt=0.02, addTerm=10):
         asset = share * self.unitPrice
         downPmtShare = downPmtRatio * self.downPmt
-        mortLiaShare = asset - downPmtShare
+        mortLiaShare = asset - downPmtShare - addloan
         mortCF = self._getAnnualPmt(principal=mortLiaShare, intAnnual=mortInt, termYears=mortTerm)
-        return max(mortCF - availCPF, 0)
+        addCF = self._getAnnualPmt(principal=addloan, intAnnual=addInt, termYears=addTerm)
+        return max(mortCF + addCF - availCPF, 0)
+
+    def getFV(self, years, ror, share=1):
+        FVIF = (1 + ror) ** years
+        return FVIF * share * self.unitPrice
+
+
 
 
 if __name__ == "__main__":
