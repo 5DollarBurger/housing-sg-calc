@@ -1,4 +1,5 @@
 import numpy as np
+import numpy_financial as npf
 import copy
 import os
 import json
@@ -41,16 +42,25 @@ class House:
         nonDownPmtShare = share * self._getNonDownPmtUpfront()
         return downPmtCF + nonDownPmtShare
 
-    def _getMortgagePmt(self, intAnnual=0.012, termYears=30, share=1, downPmtRatio=1):
+    def _getAnnualPmt(self, principal, intAnnual, termYears):
+        intMonthly = (1 + intAnnual) ** (1 / 12) - 1
+        termMonths = termYears * 12
+        pmtMonthly = -npf.pmt(rate=intMonthly, nper=termMonths, pv=principal, fv=0, when="begin")
+        return pmtMonthly * 12
+
+    def getAnnualCF(self, availCPF, mortInt, mortTerm, share=1, downPmtRatio=1):
         asset = share * self.unitPrice
         downPmtShare = downPmtRatio * self.downPmt
         mortLiaShare = asset - downPmtShare
-        intMonthly = (1 + intAnnual) ** (1 / 12) - 1
-        termMonths = termYears * 12
+        mortCF = self._getAnnualPmt(principal=mortLiaShare, intAnnual=mortInt, termYears=mortTerm)
+        return max(mortCF - availCPF, 0)
 
 
 if __name__ == "__main__":
     unitPrice = 1.08e6
     reno = 6e4
     ins = House(unitPrice=unitPrice, reno=reno)
-    print(ins.getUpfrontCF(availCPF=0.14e6, share=0.4, downPmtRatio=0.5))
+    upfrontCF = ins.getUpfrontCF(availCPF=0.14e6, share=0.4, downPmtRatio=0.5)
+    print("Upfront cashflow: %.2f" % upfrontCF)
+    annualCF = ins.getAnnualCF(availCPF=9600, mortInt=0.015, mortTerm=30, share=0.4, downPmtRatio=0.5)
+    print("Annual cashflow: %.2f" % annualCF)
