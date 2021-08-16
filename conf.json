@@ -6,5 +6,6 @@
     "100000000000": 0.04
   },
   "legalFees": 3000,
-  "downPmtPortion": 0.25
+  "downPmtPortion": 0.25,
+  "cpfReturn": 0.025
 }
